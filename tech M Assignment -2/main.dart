@@ -1,108 +1,107 @@
 import 'package:flutter/material.dart';
 
 void main() {
-  runApp(CalculatorApp());
+  runApp(TicTacToeApp());
 }
 
-class CalculatorApp extends StatelessWidget {
+class TicTacToeApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Calculator',
+      title: 'Tic Tac Toe',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(primarySwatch: Colors.blue),
-      home: CalculatorHome(),
+      theme: ThemeData(primarySwatch: Colors.purple),
+      home: TicTacToeHome(),
     );
   }
 }
 
-class CalculatorHome extends StatefulWidget {
+class TicTacToeHome extends StatefulWidget {
   @override
-  _CalculatorHomeState createState() => _CalculatorHomeState();
+  _TicTacToeHomeState createState() => _TicTacToeHomeState();
 }
 
-class _CalculatorHomeState extends State<CalculatorHome> {
-  final TextEditingController num1Controller = TextEditingController();
-  final TextEditingController num2Controller = TextEditingController();
-  String result = '';
+class _TicTacToeHomeState extends State<TicTacToeHome> {
+  List<String> board = List.filled(9, '');
+  String currentPlayer = 'X';
+  String status = 'Player X's Turn';
 
-  void calculate(String op) {
-    final num1 = double.tryParse(num1Controller.text);
-    final num2 = double.tryParse(num2Controller.text);
+  void resetGame() {
+    setState(() {
+      board = List.filled(9, '');
+      currentPlayer = 'X';
+      status = 'Player X's Turn';
+    });
+  }
 
-    if (num1 == null || num2 == null) {
-      setState(() {
-        result = 'Please enter valid numbers.';
-      });
-      return;
-    }
-
-    double res;
-    switch (op) {
-      case '+':
-        res = num1 + num2;
-        break;
-      case '-':
-        res = num1 - num2;
-        break;
-      case '*':
-        res = num1 * num2;
-        break;
-      case '/':
-        if (num2 == 0) {
-          setState(() => result = 'Cannot divide by zero.');
-          return;
-        }
-        res = num1 / num2;
-        break;
-      case '%':
-        if (num2 == 0) {
-          setState(() => result = 'Cannot mod by zero.');
-          return;
-        }
-        res = num1 % num2;
-        break;
-      default:
-        res = 0;
-    }
+  void handleTap(int index) {
+    if (board[index] != '') return;
 
     setState(() {
-      result = 'Result: \$res';
+      board[index] = currentPlayer;
+      if (checkWinner(currentPlayer)) {
+        status = 'Player $currentPlayer Wins!';
+      } else if (!board.contains('')) {
+        status = 'It's a Draw!';
+      } else {
+        currentPlayer = currentPlayer == 'X' ? 'O' : 'X';
+        status = 'Player $currentPlayer's Turn';
+      }
     });
+  }
+
+  bool checkWinner(String player) {
+    List<List<int>> winPatterns = [
+      [0, 1, 2],
+      [3, 4, 5],
+      [6, 7, 8],
+      [0, 3, 6],
+      [1, 4, 7],
+      [2, 5, 8],
+      [0, 4, 8],
+      [2, 4, 6],
+    ];
+    return winPatterns.any((pattern) =>
+        pattern.every((index) => board[index] == player));
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Basic Calculator')),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            TextField(
-              controller: num1Controller,
-              keyboardType: TextInputType.number,
-              decoration: InputDecoration(labelText: 'Enter first number'),
-            ),
-            TextField(
-              controller: num2Controller,
-              keyboardType: TextInputType.number,
-              decoration: InputDecoration(labelText: 'Enter second number'),
-            ),
-            SizedBox(height: 20),
-            Wrap(
-              spacing: 10,
-              children: ['+', '-', '*', '/', '%'].map((op) {
-                return ElevatedButton(
-                  onPressed: () => calculate(op),
-                  child: Text(op),
-                );
-              }).toList(),
-            ),
-            SizedBox(height: 20),
-            Text(result, style: TextStyle(fontSize: 20)),
-          ],
-        ),
+      appBar: AppBar(title: Text('Tic Tac Toe')),
+      body: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(status, style: TextStyle(fontSize: 22)),
+          GridView.builder(
+            shrinkWrap: true,
+            padding: const EdgeInsets.all(20),
+            itemCount: 9,
+            gridDelegate:
+                SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 3),
+            itemBuilder: (context, index) {
+              return GestureDetector(
+                onTap: () => handleTap(index),
+                child: Container(
+                  margin: EdgeInsets.all(4),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.black),
+                    color: Colors.grey[200],
+                  ),
+                  child: Center(
+                    child: Text(board[index],
+                        style: TextStyle(
+                            fontSize: 40, fontWeight: FontWeight.bold)),
+                  ),
+                ),
+              );
+            },
+          ),
+          ElevatedButton(
+            onPressed: resetGame,
+            child: Text('Reset Game'),
+          ),
+        ],
       ),
     );
   }
